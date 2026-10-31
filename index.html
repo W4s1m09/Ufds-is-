@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Çalışma Takibi">
+<meta name="theme-color" content="#10141C">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Çalışma Takibi</title>
+<script>
+  try{
+    var profRaw = localStorage.getItem('calismaTakibiProfiles_v1');
+    var activeId = 'default';
+    if(profRaw){ var profParsed = JSON.parse(profRaw); if(profParsed && profParsed.activeProfileId) activeId = profParsed.activeProfileId; }
+    var stateRaw = localStorage.getItem('calismaTakibiState_v2::' + activeId);
+    var theme = 'dark';
+    if(stateRaw){
+      var parsed = JSON.parse(stateRaw);
+      if(parsed && parsed.theme) theme = parsed.theme;
+    } else {
+      var legacyRaw = localStorage.getItem('calismaTakibiState_v2');
+      if(legacyRaw){ var legacyParsed = JSON.parse(legacyRaw); if(legacyParsed && legacyParsed.theme) theme = legacyParsed.theme; }
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  }catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+</script>
+<style>
+  :root, [data-theme="dark"]{
+    --bg:#10141C; --card:#1A2130; --input-bg:#212A3C; --ink:#EDEFF3; --muted:#8A93A6; --border:#2B3244;
+    --leader:#E3A62F; --leader-soft:rgba(227,166,47,0.14); --leader-text:#E3A62F;
+    --action:#4CB3A0; --action-soft:rgba(76,179,160,0.14); --action-text:#4CB3A0; --action-contrast:#0D1119;
+    --danger:#E2735A; --danger-soft:rgba(226,115,90,0.14);
+    --row-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    --font-display: 'Iowan Old Style','Palatino Linotype',Georgia,'Times New Roman',serif;
+    --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  }
+  [data-theme="light"]{
+    --bg:#EEF1F4; --card:#FFFFFF; --input-bg:#FFFFFF; --ink:#1C2333; --muted:#6B7686; --border:#DDE2E8;
+    --leader:#D99B1F; --leader-soft:#FBF0D6; --leader-text:#9C6B10;
+    --action:#33685F; --action-soft:#E3EEEB; --action-text:#2C6058; --action-contrast:#FFFFFF;
+    --danger:#A6462F; --danger-soft:rgba(166,70,47,0.1);
+    --row-shadow: 0 1px 2px rgba(28,35,51,0.06);
+  }
+  [data-theme="ocean"]{
+    --bg:#0B1A24; --card:#122A38; --input-bg:#173548; --ink:#E7F2F5; --muted:#7FA5B3; --border:#20495C;
+    --leader:#4FC3E0; --leader-soft:rgba(79,195,224,0.16); --leader-text:#4FC3E0;
+    --action:#2FB88A; --action-soft:rgba(47,184,138,0.16); --action-text:#3FCB9C; --action-contrast:#04141A;
+    --danger:#F0806A; --danger-soft:rgba(240,128,106,0.16);
+    --row-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  [data-theme="sunset"]{
+    --bg:#FBEDE4; --card:#FFF9F5; --input-bg:#FFF3EC; --ink:#3B2A2E; --muted:#9C7B72; --border:#F0D8C9;
+    --leader:#E0793B; --leader-soft:#FBDDC4; --leader-text:#B5551E;
+    --action:#C0507A; --action-soft:#F6DCE6; --action-text:#A13D63; --action-contrast:#FFFFFF;
+    --danger:#B03A2E; --danger-soft:rgba(176,58,46,0.1);
+    --row-shadow: 0 1px 2px rgba(59,42,46,0.06);
+  }
+  [data-theme="forest"]{
+    --bg:#0F1B13; --card:#17281C; --input-bg:#1E3324; --ink:#E8F3EA; --muted:#84A38F; --border:#2A4A34;
+    --leader:#D9C15A; --leader-soft:rgba(217,193,90,0.16); --leader-text:#D9C15A;
+    --action:#4C9A6B; --action-soft:rgba(76,154,107,0.16); --action-text:#5FBF82; --action-contrast:#07120A;
+    --danger:#E1735C; --danger-soft:rgba(225,115,92,0.14);
+    --row-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  [data-theme="lavender"]{
+    --bg:#F3EFFA; --card:#FFFFFF; --input-bg:#F8F5FE; --ink:#332E44; --muted:#8A81A3; --border:#E1D8F3;
+    --leader:#9B7FD4; --leader-soft:#EAE1F8; --leader-text:#6E4FB8;
+    --action:#6C5CB5; --action-soft:#E6E1F7; --action-text:#5A4A9E; --action-contrast:#FFFFFF;
+    --danger:#B84A6B; --danger-soft:rgba(184,74,107,0.1);
+    --row-shadow: 0 1px 2px rgba(51,46,68,0.06);
+  }
+  [data-theme="mono"]{
+    --bg:#000000; --card:#141414; --input-bg:#1C1C1C; --ink:#FFFFFF; --muted:#8C8C8C; --border:#333333;
+    --leader:#FFFFFF; --leader-soft:rgba(255,255,255,0.12); --leader-text:#FFFFFF;
+    --action:#FFFFFF; --action-soft:rgba(255,255,255,0.14); --action-text:#FFFFFF; --action-contrast:#000000;
+    --danger:#FF5C5C; --danger-soft:rgba(255,92,92,0.14);
+    --row-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background-color:var(--bg); background-repeat:repeat; background-size:150px 70px;
+    font-family:var(--font-body); color:var(--ink); -webkit-tap-highlight-color: transparent;
+  }
+  [data-theme="dark"] body, [data-theme="ocean"] body, [data-theme="forest"] body, [data-theme="mono"] body{
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='150'%20height='70'%3E%3Ctext%20x='-6'%20y='45'%20font-family='Georgia,serif'%20font-size='22'%20font-weight='700'%20letter-spacing='1'%20fill='rgba(255,255,255,0.055)'%20transform='rotate(-14%2075%2035)'%3EYKS%2727%3C/text%3E%3C/svg%3E");
+  }
+  [data-theme="light"] body, [data-theme="sunset"] body, [data-theme="lavender"] body{
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='150'%20height='70'%3E%3Ctext%20x='-6'%20y='45'%20font-family='Georgia,serif'%20font-size='22'%20font-weight='700'%20letter-spacing='1'%20fill='rgba(28,35,51,0.05)'%20transform='rotate(-14%2075%2035)'%3EYKS%2727%3C/text%3E%3C/svg%3E");
+  }
+  .wrap{ max-width:480px; margin:0 auto; padding:20px 16px 88px; }
+
+  .page-tabs{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--card); border-top:1px solid var(--border); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .page-tabs-inner{ max-width:480px; margin:0 auto; display:flex; gap:10px; justify-content:center; }
+  .page-tab{ flex:0 0 auto; width:64px; padding:10px; border-radius:12px; border:1px solid var(--border); background:var(--input-bg); color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .page-tab.active{ background:var(--action-soft); color:var(--action-text); border-color:var(--action); }
+  .page-tab:active{ transform:scale(0.95); }
+
+  .header-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:10px; }
+  .profile-header{ display:flex; align-items:center; gap:12px; background:none; border:none; cursor:pointer; padding:0; text-align:left; color:inherit; font-family:inherit; }
+  .profile-header:active{ transform:scale(0.98); }
+  .profile-avatar-lg{ width:56px; height:56px; border-radius:50%; background:var(--action-soft); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:28px; flex:0 0 auto; }
+  .profile-name-lg{ font-family:var(--font-display); font-size:19px; font-weight:700; color:var(--ink); margin-bottom:2px; }
+  .subtitle{ color:var(--muted); font-size:12.5px; }
+  .header-actions{ display:flex; gap:8px; flex:0 0 auto; }
+  .icon-btn{ width:38px; height:38px; border-radius:11px; background:var(--card); border:1px solid var(--border); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
+  .icon-btn:active{ transform:scale(0.93); }
+
+  .stat-card{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px 18px; margin-bottom:8px; cursor:pointer; text-align:left; width:100%; font-family:inherit; color:inherit; }
+  .stat-card:active{ transform:scale(0.98); }
+  .stat-card .label{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .stat-card .value{ font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--ink); }
+
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px; }
+  .stat-chip{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 10px; cursor:pointer; text-align:left; font-family:inherit; color:inherit; }
+  .stat-chip:active{ transform:scale(0.96); }
+  .stat-chip .label{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .stat-chip .value{ font-family:var(--font-display); font-weight:700; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .date-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:8px; }
+  .date-nav button{ width:38px; height:48px; border-radius:10px; background:var(--card); border:1px solid var(--border); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:19px; flex:0 0 auto; }
+  .date-nav button:disabled{ opacity:0.35; cursor:default; }
+  .date-nav button:active:not(:disabled){ transform:scale(0.92); }
+  .date-nav-label{ flex:1; min-width:0; font-family:var(--font-display); font-weight:700; font-size:17px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 8px; text-align:center; color:var(--ink); cursor:pointer; white-space:normal; line-height:1.25; }
+  .date-nav-label:active{ transform:scale(0.98); }
+
+  .calendar-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .calendar-nav .month-label{ font-family:var(--font-display); font-weight:700; font-size:16px; }
+  .calendar-nav button{ width:36px; height:36px; border-radius:10px; background:var(--card); border:1px solid var(--border); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; }
+  .calendar-nav button:active{ transform:scale(0.92); }
+  .calendar-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px; }
+  .calendar-weekdays span{ text-align:center; font-size:10.5px; color:var(--muted); font-weight:600; display:block; }
+  .calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:22px; }
+  .calendar-cell{ aspect-ratio:1; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; font-size:12.5px; color:var(--ink); gap:1px; padding:2px; font-weight:600; }
+  .calendar-cell:active{ transform:scale(0.94); }
+  .calendar-cell.empty{ background:none; border:none; cursor:default; }
+  .calendar-cell.has-data{ background:var(--action-soft); border-color:var(--action); color:var(--action-text); }
+  .calendar-cell.is-today{ box-shadow:0 0 0 2px var(--leader) inset; }
+  .calendar-cell .mini-total{ font-size:8.5px; opacity:0.9; font-weight:700; }
+
+  .list{ margin-top:4px; }
+  .row{ background:var(--card); border-radius:14px; margin-bottom:10px; box-shadow:var(--row-shadow); border:1px solid var(--border); overflow:hidden; }
+  .row.leader{ border-color:var(--leader); background:var(--leader-soft); }
+  .row-main{ display:flex; align-items:center; gap:10px; padding:13px 14px; cursor:pointer; min-height:44px; }
+  .icon-badge{ flex:0 0 34px; height:34px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .row.leader .icon-badge{ background:var(--leader); }
+  .row-info{ flex:1; min-width:0; }
+  .eyebrow{ font-size:10.5px; font-weight:700; letter-spacing:0.8px; color:var(--leader-text); margin-bottom:2px; }
+  .topic-name{ font-size:15.5px; font-weight:600; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-track{ height:6px; border-radius:4px; background:rgba(128,128,128,0.18); overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:4px; background:var(--action); width:0%; transition:width 0.4s ease; }
+  .row.leader .bar-fill{ background:var(--leader); }
+  .live-line{ font-family:var(--font-display); font-size:11px; color:var(--action-text); margin-top:5px; display:flex; align-items:center; gap:5px; }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--action-text); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+  .time-value{ flex:0 0 auto; font-family:var(--font-display); font-weight:700; font-size:14.5px; white-space:nowrap; padding-left:2px; }
+  .empty-state{ text-align:center; color:var(--muted); font-size:13.5px; padding:30px 10px; }
+  footer{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:20px; }
+  button:focus-visible, .row-main:focus-visible, input:focus-visible{ outline:2px solid var(--action); outline-offset:2px; }
+
+  .page-header{ display:flex; align-items:center; gap:10px; margin-bottom:20px; position:relative; }
+  .back-btn{ width:38px; height:38px; border-radius:11px; background:var(--card); border:1px solid var(--border); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
+  .back-btn:active{ transform:scale(0.93); }
+  .page-title{ flex:1; min-width:0; font-family:var(--font-display); font-size:19px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .page-title .name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kebab-btn{ width:38px; height:38px; border-radius:11px; background:var(--card); border:1px solid var(--border); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
+  .kebab-btn:active{ transform:scale(0.93); }
+  .kebab-menu{ position:absolute; top:46px; right:0; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 26px rgba(0,0,0,0.35); overflow:hidden; z-index:40; min-width:190px; }
+  .kebab-menu button{ display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:13px 14px; background:none; border:none; color:var(--ink); font-size:13.5px; cursor:pointer; }
+  .kebab-menu button:not(:last-child){ border-bottom:1px solid var(--border); }
+  .kebab-menu button.danger{ color:var(--danger); }
+  .kebab-menu button:active{ background:var(--input-bg); }
+
+  .stopwatch-wrap{ position:relative; width:210px; height:210px; margin:6px auto 22px; display:flex; align-items:center; justify-content:center; }
+  .stopwatch-ring{ width:210px; height:210px; transform:rotate(-90deg); }
+  .ring-track{ fill:none; stroke:var(--border); stroke-width:9; }
+  .ring-progress{ fill:none; stroke:var(--action); stroke-width:9; stroke-linecap:round; }
+  .stopwatch-time{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100%; text-align:center; font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-0.5px; }
+  .stopwatch-controls{ display:flex; align-items:center; justify-content:center; gap:24px; margin-bottom:18px; }
+  .stopwatch-btn-reset{ width:52px; height:52px; border-radius:50%; border:1px solid var(--border); background:var(--input-bg); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .stopwatch-btn-play{ width:74px; height:74px; border-radius:50%; border:none; background:var(--action); color:var(--action-contrast); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,0.25); }
+  .stopwatch-btn-play.is-running{ background:var(--danger); }
+  .stopwatch-btn-play:active, .stopwatch-btn-reset:active{ transform:scale(0.94); }
+  .stopwatch-quickadd{ display:block; width:100%; text-align:center; background:var(--action-soft); color:var(--action-text); border:none; border-radius:12px; padding:12px; font-size:13.5px; font-weight:700; cursor:pointer; margin-bottom:18px; }
+  .stopwatch-quickadd:disabled{ opacity:0.35; cursor:default; }
+  .stopwatch-quickadd:active:not(:disabled){ transform:scale(0.98); }
+  .topic-total-line{ text-align:center; color:var(--muted); font-size:12.5px; margin:2px 0 6px; }
+  .section-label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
+
+  .mode-toggle{ display:flex; gap:8px; margin-bottom:12px; }
+  .mode-btn{ flex:1; padding:9px; border-radius:9px; border:1px solid var(--border); background:var(--input-bg); color:var(--muted); font-weight:700; font-size:12.5px; cursor:pointer; }
+  .mode-btn.active-add{ background:var(--action-soft); color:var(--action-text); border-color:var(--action); }
+  .mode-btn.active-subtract{ background:var(--danger-soft); color:var(--danger); border-color:var(--danger); }
+  .preset-row{ display:flex; gap:8px; margin-bottom:12px; }
+  .preset-btn{ flex:1; background:var(--action-soft); color:var(--action-text); border:none; border-radius:10px; padding:11px 4px; font-size:13px; font-weight:700; cursor:pointer; }
+  .preset-btn.subtract{ background:var(--danger-soft); color:var(--danger); }
+  .preset-btn:active{ transform:scale(0.96); }
+  .custom-row{ display:flex; gap:8px; margin-bottom:20px; align-items:flex-end; }
+  .input-group{ display:flex; flex-direction:column; flex:0 0 64px; }
+  .input-group label{ font-size:10.5px; color:var(--muted); margin-bottom:4px; font-weight:600; }
+  .input-group input{ width:100%; padding:10px 8px; border:1px solid var(--border); border-radius:8px; font-size:16px; font-family:var(--font-body); color:var(--ink); background:var(--input-bg); }
+  .add-btn{ flex:1; background:var(--action); color:var(--action-contrast); border:none; border-radius:8px; padding:11px 10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .add-btn.subtract{ background:var(--danger); color:#fff; }
+  .add-btn:active{ transform:scale(0.97); }
+
+  .day-edit-row{ display:flex; align-items:center; gap:6px; padding:9px 10px; background:var(--input-bg); border-radius:10px; margin-bottom:8px; }
+  .day-edit-row .name{ flex:1; min-width:0; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .day-edit-row input{ width:42px; padding:7px 4px; border:1px solid var(--border); border-radius:7px; background:var(--card); color:var(--ink); font-size:13px; flex:0 0 auto; text-align:center; }
+  .day-edit-row .unit-label{ font-size:11px; color:var(--muted); flex:0 0 auto; }
+  .day-edit-row .trash-btn{ background:none; border:none; color:var(--danger); cursor:pointer; padding:4px; display:flex; flex:0 0 auto; }
+  .day-add-row{ display:flex; gap:6px; margin:4px 0 18px; align-items:center; }
+  .day-add-row select{ flex:1; min-width:0; padding:10px 4px; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--ink); font-size:12.5px; }
+  .day-add-row input{ width:42px; padding:10px 4px; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--ink); font-size:13px; flex:0 0 auto; text-align:center; }
+  .day-add-row button{ background:var(--action); color:var(--action-contrast); border:none; border-radius:8px; padding:0 12px; font-weight:700; cursor:pointer; flex:0 0 auto; }
+  .save-edit-btn{ width:100%; padding:13px; border-radius:12px; border:none; background:var(--action); color:var(--action-contrast); font-weight:700; font-size:14px; cursor:pointer; margin-bottom:10px; }
+  .cancel-edit-btn{ width:100%; padding:11px; border-radius:12px; border:1px solid var(--border); background:none; color:var(--muted); font-weight:600; font-size:13px; cursor:pointer; }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:flex-end; justify-content:center; z-index:50; }
+  .modal-backdrop.layered{ z-index:60; }
+  .modal-card{ background:var(--card); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px 18px 30px; max-height:86vh; overflow-y:auto; }
+  .modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .modal-header h2{ font-family:var(--font-display); font-size:19px; margin:0; color:var(--ink); display:flex; align-items:center; gap:8px; }
+  .close-btn{ background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; }
+
+  .theme-options{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px; }
+  .theme-btn{ padding:14px 8px; border-radius:12px; border:2px solid transparent; font-weight:700; font-size:13px; cursor:pointer; position:relative; }
+  .theme-btn.active{ border-color:currentColor; }
+  .theme-btn .check{ position:absolute; top:6px; right:8px; font-size:11px; }
+
+  .profile-circles{ display:flex; gap:14px; overflow-x:auto; padding:4px 2px 12px; margin-bottom:4px; }
+  .profile-circle-item{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:0 0 auto; width:60px; }
+  .profile-circle{ width:56px; height:56px; border-radius:50%; background:var(--input-bg); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; position:relative; }
+  .profile-circle.active{ border-color:var(--action); box-shadow:0 0 0 2px var(--action-soft); }
+  .profile-circle.add-circle{ background:none; border:2px dashed var(--border); color:var(--muted); }
+  .profile-circle-name{ font-size:10.5px; color:var(--muted); text-align:center; max-width:60px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .circle-del-badge{ position:absolute; top:-4px; right:-4px; width:18px; height:18px; border-radius:50%; background:var(--danger); color:#fff; border:none; font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+
+  .danger-zone-btn{ width:100%; padding:13px; border-radius:12px; border:1px solid var(--border); background:none; color:var(--danger); font-weight:600; font-size:13.5px; cursor:pointer; }
+  .manage-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .manage-item{ display:flex; align-items:center; gap:8px; padding:9px 10px; background:var(--input-bg); border-radius:10px; }
+  .manage-item .icon-badge{ flex:0 0 32px; height:32px; font-size:15px; background:var(--border); border:none; padding:0; cursor:pointer; }
+  .manage-item .name{ flex:1; min-width:0; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .manage-item .trash-btn{ background:none; border:none; color:var(--danger); cursor:pointer; padding:4px; display:flex; flex:0 0 auto; }
+  .add-topic-row{ display:flex; gap:8px; }
+  .add-topic-row input{ flex:1; min-width:0; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--ink); font-size:15px; }
+  .add-topic-row button.submit-add{ background:var(--action); color:var(--action-contrast); border:none; border-radius:10px; padding:0 16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .emoji-picker-btn{ flex:0 0 44px; height:44px; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); font-size:19px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .emoji-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+  .emoji-option{ font-size:21px; background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:10px 0; cursor:pointer; line-height:1; }
+  .emoji-option:active{ transform:scale(0.9); }
+  .breakdown-item{ display:flex; align-items:center; gap:10px; padding:9px 10px; background:var(--input-bg); border-radius:10px; margin-bottom:8px; }
+  .breakdown-item .name{ flex:1; min-width:0; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .breakdown-item .value{ flex:0 0 auto; white-space:nowrap; font-family:var(--font-display); font-weight:700; font-size:13.5px; }
+
+  @media (prefers-reduced-motion: reduce){ .bar-fill{ transition:none; } .live-dot{ animation:none; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="app"></div>
+  </div>
+  <div class="page-tabs" id="pageTabs"></div>
+  <div id="modalRoot"></div>
+
+<script>
+  var ICONS = {
+    gear: (function(){
+      var teeth = [0,45,90,135,180,225,270,315].map(function(deg){
+        return '<rect x="10.6" y="0.6" width="2.8" height="3.4" rx="1" fill="currentColor" transform="rotate('+deg+' 12 12)"></rect>';
+      }).join('');
+      return '<svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>' + teeth + '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"></circle></svg>';
+    })(),
+    pencil: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>',
+    playBig: '<svg viewBox="0 0 24 24" width="26" height="26"><path d="M6 4l14 8-14 8V4z" fill="currentColor"></path></svg>',
+    pauseBig: '<svg viewBox="0 0 24 24" width="26" height="26"><rect x="5" y="4" width="5" height="16" rx="1.4" fill="currentColor"></rect><rect x="14" y="4" width="5" height="16" rx="1.4" fill="currentColor"></rect></svg>',
+    reset: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>',
+    trash: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path></svg>',
+    plus: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>',
+    close: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>',
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>',
+    kebab: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg>',
+    listIcon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"></circle></svg>',
+    lineChart: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"></path></svg>'
+  };
+
+  var LEGACY_STATE_KEY = 'calismaTakibiState_v2';
+  var PROFILES_KEY = 'calismaTakibiProfiles_v1';
+  function stateKeyFor(id){ return 'calismaTakibiState_v2::' + id; }
+
+  var DEFAULT_TOPICS = [
+    {name:'Coğrafya', icon:'🌍'}, {name:'Fizik', icon:'⚛️'}, {name:'Matematik', icon:'🧮'},
+    {name:'Tarih', icon:'🏛️'}, {name:'Din', icon:'🕌'}, {name:'Felsefe', icon:'🦉'},
+    {name:'Kimya', icon:'🧪'}, {name:'Biyoloji', icon:'🧬'}, {name:'Geometri', icon:'📐'},
+    {name:'Paragraf', icon:'📖'}, {name:'Dil Bilgisi', icon:'🔤'}
+  ];
+  var ICON_RULES = [
+    ['matemat','🧮'], ['geometri','📐'], ['fizik','⚛️'], ['kimya','🧪'],
+    ['biyoloji','🧬'], ['tarih','🏛️'], ['cograf','🌍'], ['din','🕌'],
+    ['felsefe','🦉'], ['paragraf','📖'], ['dil bil','🔤'], ['dilbilgisi','🔤'],
+    ['edebiyat','📚'], ['ingiliz','🗣️'], ['psikoloji','🧠'], ['sosyoloji','👥'],
+    ['mantik','🧩'], ['inkilap','🏳️']
+  ];
+  var DEFAULT_ICON = '📘';
+  var EMOJI_CHOICES = ['🧮','📐','⚛️','🧪','🧬','🏛️','🕌','🦉','📖','🔤','📚','🗣️','🧠','👥','🧩','🏳️','🌍','📘','🔬','💻','🎨','⚖️','🗺️','🎵','📊','✏️','📝','🩺','🔭','🌱','🏺','🌐'];
+  var PEOPLE_EMOJIS = ['🧑‍🎓','👨‍🏫','👩‍🏫','🧑‍🔬','👨‍💻','👩‍💻','🧑‍⚕️','👮','👨‍🍳','🧑‍🎨','👷','🧑‍🚀','🧑‍✈️','👨‍🌾','🧑‍⚖️','🕵️','🧑‍🚒','🧑‍🔧','🧑‍💼','🧑‍🎤'];
+
+  var THEME_LABELS = {dark:'Koyu', light:'Açık', ocean:'Okyanus', sunset:'Gün Batımı', forest:'Orman', lavender:'Lavanta', mono:'Mono'};
+  var THEME_PREVIEWS = {
+    dark:   {bg:'#1A2130', text:'#EDEFF3', border:'#2B3244', accent:'#4CB3A0'},
+    light:  {bg:'#FFFFFF', text:'#1C2333', border:'#DDE2E8', accent:'#33685F'},
+    ocean:  {bg:'#122A38', text:'#E7F2F5', border:'#20495C', accent:'#2FB88A'},
+    sunset: {bg:'#FFF9F5', text:'#3B2A2E', border:'#F0D8C9', accent:'#C0507A'},
+    forest: {bg:'#17281C', text:'#E8F3EA', border:'#2A4A34', accent:'#4C9A6B'},
+    lavender:{bg:'#FFFFFF', text:'#332E44', border:'#E1D8F3', accent:'#6C5CB5'},
+    mono:   {bg:'#141414', text:'#FFFFFF', border:'#333333', accent:'#FFFFFF'}
+  };
+
+  var MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  var WEEKDAYS_TR_FULL = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+  var DAY_ABBR_TR = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+
+  function turkishToAscii(s){
+    var map = {'ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','Ç':'c','Ğ':'g','İ':'i','Ö':'o','Ş':'s','Ü':'u'};
+    return s.replace(/[çğıöşüÇĞİÖŞÜ]/g, function(ch){ return map[ch] || ch; });
+  }
+  function slugify(name){ return turkishToAscii(name).toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') || ('konu-' + Date.now()); }
+  function pickIcon(name){
+    var lower = turkishToAscii(name).toLowerCase();
+    for(var i=0;i<ICON_RULES.length;i++){ if(lower.indexOf(ICON_RULES[i][0]) !== -1) return ICON_RULES[i][1]; }
+    return DEFAULT_ICON;
+  }
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function pad3(n){ return String(n).padStart(3,'0'); }
+
+  function loadProfileRegistry(){
+    try{
+      var raw = localStorage.getItem(PROFILES_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.profiles) && parsed.profiles.length>0 && parsed.activeProfileId) return parsed;
+      }
+    }catch(e){}
+    var registry = {activeProfileId:'default', profiles:[{id:'default', name:'Ben', emoji:'🧑‍🎓'}]};
+    try{
+      var legacyRaw = localStorage.getItem(LEGACY_STATE_KEY);
+      if(legacyRaw && !localStorage.getItem(stateKeyFor('default'))){ localStorage.setItem(stateKeyFor('default'), legacyRaw); }
+    }catch(e){}
+    try{ localStorage.setItem(PROFILES_KEY, JSON.stringify(registry)); }catch(e){}
+    return registry;
+  }
+  function saveProfileRegistry(){ try{ localStorage.setItem(PROFILES_KEY, JSON.stringify(profileRegistry)); }catch(e){} }
+  function activeProfile(){ return profileRegistry.profiles.find(function(p){ return p.id===profileRegistry.activeProfileId; }) || profileRegistry.profiles[0]; }
+
+  function defaultState(){
+    return { theme:'dark', topics: DEFAULT_TOPICS.map(function(t){ return {id:slugify(t.name), name:t.name, icon:t.icon, total:0}; }), entries: [], timers: {} };
+  }
+  function loadState(profileId){
+    try{
+      var raw = localStorage.getItem(stateKeyFor(profileId));
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.topics)){
+          if(!parsed.timers) parsed.timers = {};
+          if(parsed.timer && parsed.timer.topicId){ parsed.timers[parsed.timer.topicId] = {startTs: parsed.timer.startTs || null, accumulatedMs: 0}; }
+          delete parsed.timer; delete parsed.track; delete parsed.hasSeenTrackOnboarding;
+          parsed.topics.forEach(function(t){ delete t.section; });
+          return parsed;
+        }
+      }
+    }catch(e){}
+    return defaultState();
+  }
+  function saveState(){ try{ localStorage.setItem(stateKeyFor(profileRegistry.activeProfileId), JSON.stringify(state)); }catch(e){} }
+
+  var profileRegistry = loadProfileRegistry();
+  var state = loadState(profileRegistry.activeProfileId);
+
+  var activePage = 0;
+  var viewStack = [{type:'home'}];
+  var activeModal = null;
+  var emojiPickerFor = null;
+  var pendingNewTopicIcon = null;
+  var pendingNewProfileName = null;
+  var timerMenuOpen = false;
+  var timeEntryMode = 'add';
+  var dayEditMode = false;
+  var dayEditDraft = null;
+  var tickInterval = null;
+  var tickDelay = null;
+
+  function topView(){ return viewStack[viewStack.length-1]; }
+  function navigateTo(view){ viewStack.push(view); timerMenuOpen=false; timeEntryMode='add'; render(); }
+  function navigateBack(){ if(viewStack.length>1) viewStack.pop(); timerMenuOpen=false; dayEditMode=false; dayEditDraft=null; render(); }
+  function replaceTop(view){ viewStack[viewStack.length-1] = view; render(); }
+
+  function formatDuration(minutes){
+    minutes = Math.round(minutes);
+    if(minutes <= 0) return '0 dk';
+    var d = Math.floor(minutes/1440), h = Math.floor((minutes%1440)/60), m = minutes % 60;
+    var parts = [];
+    if(d>0) parts.push(d + ' gün');
+    if(h>0) parts.push(h + ' sa');
+    if(m>0 || parts.length===0) parts.push(m + ' dk');
+    return parts.join(' ');
+  }
+  function formatDurationShort(minutes){
+    minutes = Math.round(minutes);
+    if(minutes <= 0) return '';
+    var h = Math.floor(minutes/60), m = minutes % 60;
+    if(h>0) return h + 's' + (m>0?m:'');
+    return minutes + 'dk';
+  }
+  function formatClock(totalSeconds){
+    totalSeconds = Math.max(0, Math.floor(totalSeconds));
+    var h = Math.floor(totalSeconds/3600), m = Math.floor((totalSeconds%3600)/60), s = totalSeconds%60;
+    return h>0 ? (pad2(h)+':'+pad2(m)+':'+pad2(s)) : (pad2(m)+':'+pad2(s));
+  }
+  function formatClockMs(totalMs){
+    totalMs = Math.max(0, Math.floor(totalMs));
+    var ms = totalMs % 1000;
+    var totalSeconds = Math.floor(totalMs/1000);
+    var h = Math.floor(totalSeconds/3600), m = Math.floor((totalSeconds%3600)/60), s = totalSeconds%60;
+    var base = h>0 ? (pad2(h)+':'+pad2(m)+':'+pad2(s)) : (pad2(m)+':'+pad2(s));
+    return base + '.' + pad3(ms);
+  }
+
+  function startOfDay(ts){ var d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+  function startOfWeek(ts){ var d=new Date(ts); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d.getTime(); }
+  function startOfMonth(ts){ var d=new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
+  function startOfYear(ts){ var d=new Date(ts); d.setMonth(0,1); d.setHours(0,0,0,0); return d.getTime(); }
+
+  function sumRange(start,end){ var s=0; state.entries.forEach(function(e){ if(e.ts>=start && e.ts<end) s+=e.minutes; }); return s; }
+  function sumSince(sinceTs){ return sumRange(sinceTs, Infinity); }
+  function breakdownRange(start,end){
+    var map = {};
+    state.entries.forEach(function(e){ if(e.ts>=start && e.ts<end) map[e.topicId] = (map[e.topicId]||0) + e.minutes; });
+    var list = Object.keys(map).map(function(id){
+      var topic = state.topics.find(function(t){ return t.id===id; });
+      return {id:id, name: topic?topic.name:'(silinmiş konu)', icon: topic?topic.icon:'📘', minutes: map[id]};
+    });
+    list.sort(function(a,b){ return b.minutes-a.minutes; });
+    return list;
+  }
+
+  function makeDateKey(year, month, day){ return year + '-' + pad2(month) + '-' + pad2(day); }
+  function parseDateKey(key){ var p = key.split('-').map(Number); return {year:p[0], month:p[1], day:p[2]}; }
+  function dayRange(dateKey){ var p = parseDateKey(dateKey); var start = new Date(p.year, p.month-1, p.day, 0,0,0,0).getTime(); return [start, start + 86400000]; }
+  function todayKey(){ var n=new Date(); return makeDateKey(n.getFullYear(), n.getMonth()+1, n.getDate()); }
+  function formatDateLabelTR(dateKey){
+    var todayK = todayKey();
+    if(dateKey === todayK) return 'Bugün';
+    var diffDays = Math.round((dayRange(todayK)[0] - dayRange(dateKey)[0]) / 86400000);
+    if(diffDays === 1) return 'Dün';
+    if(diffDays > 1 && diffDays <= 7){
+      var p = parseDateKey(dateKey);
+      var d = new Date(p.year, p.month-1, p.day);
+      return WEEKDAYS_TR_FULL[(d.getDay()+6)%7];
+    }
+    var p2 = parseDateKey(dateKey);
+    return p2.day + ' ' + MONTHS_TR[p2.month-1] + ' ' + p2.year;
+  }
+  function daysInMonth(year, month){ return new Date(year, month, 0).getDate(); }
+  function firstWeekdayOfMonth(year, month){ var d = new Date(year, month-1, 1); return (d.getDay()+6)%7; }
+  function monthDayTotals(year, month){
+    var map = {};
+    state.entries.forEach(function(e){
+      var d = new Date(e.ts);
+      if(d.getFullYear()===year && (d.getMonth()+1)===month){ var day = d.getDate(); map[day] = (map[day]||0) + e.minutes; }
+    });
+    return map;
+  }
+  function shiftHomeDate(deltaDays){
+    var p = parseDateKey(homeSelectedDateKey);
+    var d = new Date(p.year, p.month-1, p.day);
+    d.setDate(d.getDate() + deltaDays);
+    var newKey = makeDateKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+    if(newKey > todayKey()) return;
+    homeSelectedDateKey = newKey;
+    render();
+  }
+  var homeSelectedDateKey = todayKey();
+
+  function getStopwatchElapsedMs(topicId){
+    var t = state.timers && state.timers[topicId];
+    if(!t) return 0;
+    return t.accumulatedMs + (t.startTs ? (Date.now()-t.startTs) : 0);
+  }
+  function isStopwatchRunning(topicId){ var t = state.timers && state.timers[topicId]; return !!(t && t.startTs); }
+  function anyStopwatchRunning(){ if(!state.timers) return false; return Object.keys(state.timers).some(function(id){ return !!state.timers[id].startTs; }); }
+  function toggleStopwatch(topicId){
+    if(!state.timers) state.timers = {};
+    if(!state.timers[topicId]) state.timers[topicId] = {startTs:null, accumulatedMs:0};
+    var t = state.timers[topicId];
+    if(t.startTs){ t.accumulatedMs += Date.now() - t.startTs; t.startTs = null; } else { t.startTs = Date.now(); }
+    saveState(); render();
+  }
+  function resetStopwatch(topicId){
+    var elapsed = getStopwatchElapsedMs(topicId);
+    function doReset(){
+      var running = isStopwatchRunning(topicId);
+      state.timers[topicId] = {startTs: running?Date.now():null, accumulatedMs:0};
+      saveState(); render();
+    }
+    if(elapsed > 3000){ if(confirm('Kronometre sıfırlansın mı? Kaydedilmemiş süre silinecek.')) doReset(); } else { doReset(); }
+  }
+  function addStopwatchReadingToTotal(topicId){
+    var ms = getStopwatchElapsedMs(topicId);
+    var minutes = Math.round(ms/60000);
+    if(minutes < 1) return;
+    addTime(topicId, minutes);
+    state.timers[topicId] = {startTs:null, accumulatedMs:0};
+    saveState(); render();
+  }
+  function addTime(topicId, minutes){
+    if(!minutes) return;
+    var topic = state.topics.find(function(t){ return t.id===topicId; });
+    if(!topic) return;
+    if(minutes < 0 && Math.abs(minutes) > topic.total) minutes = -topic.total;
+    if(minutes === 0) return;
+    topic.total += minutes;
+    state.entries.push({topicId:topicId, minutes:minutes, ts:Date.now()});
+    saveState(); render();
+  }
+  function resetTopicTotal(topicId){
+    var topic = state.topics.find(function(t){ return t.id===topicId; });
+    if(!topic) return;
+    if(!confirm(topic.name + ' konusundaki tüm kayıtlı süre silinsin mi?')) return;
+    topic.total = 0;
+    state.entries = state.entries.filter(function(e){ return e.topicId!==topicId; });
+    if(state.timers) delete state.timers[topicId];
+    timerMenuOpen = false;
+    saveState(); render();
+  }
+  function removeTopic(topicId){
+    var topic = state.topics.find(function(t){ return t.id===topicId; });
+    if(!confirm((topic?topic.name:'Bu konu') + ' kaldırılsın mı?')) return;
+    state.topics = state.topics.filter(function(t){ return t.id!==topicId; });
+    state.entries = state.entries.filter(function(e){ return e.topicId!==topicId; });
+    if(state.timers) delete state.timers[topicId];
+    timerMenuOpen = false;
+    if(topView().type==='timer' && topView().topicId===topicId) navigateBack();
+    saveState(); render();
+  }
+  function addTopic(name, icon){
+    name = name.trim();
+    if(!name) return;
+    var id = slugify(name) + '-' + Date.now().toString(36);
+    state.topics.push({id:id, name:name, icon: icon || pickIcon(name), total:0});
+    saveState(); render();
+  }
+  function setTheme(theme){
+    state.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    saveState(); render();
+  }
+  function resetAllTotals(){
+    state.topics.forEach(function(t){ t.total = 0; });
+    state.entries = []; state.timers = {};
+    saveState(); render();
+  }
+
+  function switchProfile(id){
+    saveState();
+    profileRegistry.activeProfileId = id;
+    saveProfileRegistry();
+    state = loadState(id);
+    document.documentElement.setAttribute('data-theme', state.theme || 'dark');
+    viewStack = [{type:'home'}];
+    activeModal = null;
+    homeSelectedDateKey = todayKey();
+    render();
+  }
+  function addProfile(name, emoji){
+    name = (name||'').trim();
+    if(!name) return;
+    var id = 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    profileRegistry.profiles.push({id:id, name:name, emoji: emoji || '🙂'});
+    saveProfileRegistry();
+    switchProfile(id);
+  }
+  function removeProfileById(id){
+    if(profileRegistry.profiles.length <= 1){ alert('En az bir kullanıcı olmalı.'); return; }
+    var prof = profileRegistry.profiles.find(function(p){ return p.id===id; });
+    if(!confirm((prof?prof.name:'Bu kullanıcı') + ' silinsin mi? Tüm verileri silinecek.')) return;
+    try{ localStorage.removeItem(stateKeyFor(id)); }catch(e){}
+    profileRegistry.profiles = profileRegistry.profiles.filter(function(p){ return p.id!==id; });
+    if(profileRegistry.activeProfileId === id){
+      saveProfileRegistry();
+      switchProfile(profileRegistry.profiles[0].id);
+    } else {
+      saveProfileRegistry();
+      activeModal = {type:'settings'};
+      renderModals();
+    }
+  }
+  function renameProfile(id){
+    var prof = profileRegistry.profiles.find(function(p){ return p.id===id; });
+    if(!prof) return;
+    var newName = prompt('Yeni kullanıcı adı:', prof.name);
+    if(newName===null) return;
+    newName = newName.trim();
+    if(!newName) return;
+    prof.name = newName;
+    saveProfileRegistry();
+    activeModal = {type:'settings'};
+    renderModals();
+    render();
+  }
+
+  function renderPageTabs(){
+    var root = document.getElementById('pageTabs');
+    root.innerHTML =
+      '<div class="page-tabs-inner">' +
+      '<button class="page-tab' + (activePage===0?' active':'') + '" id="tabPage0" aria-label="Takip">' + ICONS.listIcon + '</button>' +
+      '<button class="page-tab' + (activePage===1?' active':'') + '" id="tabPage1" aria-label="Sayfa 2">' + ICONS.lineChart + '</button>' +
+      '</div>';
+    document.getElementById('tabPage0').addEventListener('click', function(){ activePage=0; render(); });
+    document.getElementById('tabPage1').addEventListener('click', function(){ activePage=1; render(); });
+  }
+  function renderPage2HTML(){
+    return '<div class="empty-state" style="padding:90px 20px;">Çok yakında burada yeni bir şeyler olacak 👀</div>';
+  }
+
+  function renderTopicRow(topic, displayMinutes, isLeader, maxVal){
+    var pct = maxVal > 0 ? Math.max(4, Math.round((displayMinutes/maxVal)*100)) : 0;
+    var running = isStopwatchRunning(topic.id);
+    var liveLine = running ? ('<div class="live-line"><span class="live-dot"></span>' + formatClock(getStopwatchElapsedMs(topic.id)/1000) + ' kronometre çalışıyor</div>') : '';
+    return '' +
+      '<div class="row' + (isLeader?' leader':'') + '">' +
+        '<div class="row-main" data-topic="' + topic.id + '" tabindex="0" role="button">' +
+          '<div class="icon-badge">' + topic.icon + '</div>' +
+          '<div class="row-info">' +
+            (isLeader ? '<div class="eyebrow">ZİRVEDE</div>' : '') +
+            '<div class="topic-name">' + escapeHtml(topic.name) + '</div>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+            liveLine +
+          '</div>' +
+          '<div class="time-value">' + formatDuration(displayMinutes) + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderHomeHTML(){
+    var now = Date.now();
+    var sod = startOfDay(now);
+    var todayTotal = sumRange(sod, Infinity);
+    var yesterdayTotal = sumRange(sod - 86400000, sod);
+    var weekTotal = sumSince(startOfWeek(now));
+    var monthTotal = sumSince(startOfMonth(now));
+    var yearTotal = sumSince(startOfYear(now));
+    var prof = activeProfile();
+
+    var dr = dayRange(homeSelectedDateKey);
+    var dayMap = {};
+    state.entries.forEach(function(e){ if(e.ts>=dr[0] && e.ts<dr[1]) dayMap[e.topicId] = (dayMap[e.topicId]||0) + e.minutes; });
+
+    var sorted = state.topics.slice().sort(function(a,b){ return (dayMap[b.id]||0) - (dayMap[a.id]||0); });
+    var maxVal = sorted.length ? (dayMap[sorted[0].id]||0) : 0;
+    var listHtml = sorted.length === 0
+      ? '<div class="empty-state">Henüz konu eklenmedi. Sağ üstteki kalem ikonuyla ekleyebilirsin.</div>'
+      : sorted.map(function(topic, idx){ var mins = dayMap[topic.id]||0; return renderTopicRow(topic, mins, idx===0 && mins>0, maxVal); }).join('');
+
+    return '' +
+      '<div class="header-top">' +
+        '<button class="profile-header" id="profileHeaderBtn">' +
+          '<div class="profile-avatar-lg">' + prof.emoji + '</div>' +
+          '<div><div class="profile-name-lg">' + escapeHtml(prof.name) + '</div><div class="subtitle">' + state.topics.length + ' konu</div></div>' +
+        '</button>' +
+        '<div class="header-actions">' +
+          '<button class="icon-btn" id="settingsBtn" aria-label="Ayarlar">' + ICONS.gear + '</button>' +
+          '<button class="icon-btn" id="manageBtn" aria-label="Konuları Düzenle">' + ICONS.pencil + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<button class="stat-card" id="todayStatCard"><div class="label">Bugün</div><div class="value">' + formatDuration(todayTotal) + '</div></button>' +
+      '<div class="stat-grid">' +
+        '<button class="stat-chip" data-period="yesterday"><div class="label">Dün</div><div class="value">' + formatDuration(yesterdayTotal) + '</div></button>' +
+        '<button class="stat-chip" data-period="week"><div class="label">Bu Hafta</div><div class="value">' + formatDuration(weekTotal) + '</div></button>' +
+        '<button class="stat-chip" data-period="month"><div class="label">Bu Ay</div><div class="value">' + formatDuration(monthTotal) + '</div></button>' +
+        '<button class="stat-chip" data-period="year"><div class="label">Bu Yıl</div><div class="value">' + formatDuration(yearTotal) + '</div></button>' +
+      '</div>' +
+      '<div class="date-nav">' +
+        '<button id="homeDatePrev">‹</button>' +
+        '<button class="date-nav-label" id="homeDateLabel">' + formatDateLabelTR(homeSelectedDateKey) + '</button>' +
+        '<button id="homeDateNext"' + (homeSelectedDateKey>=todayKey()?' disabled':'') + '>›</button>' +
+      '</div>' +
+      '<div class="list">' + listHtml + '</div>' +
+      '<footer>Veriler yalnızca bu cihazda saklanır, internet gerekmez.</footer>';
+  }
+
+  function bindHomeEvents(){
+    document.getElementById('settingsBtn').addEventListener('click', function(){ activeModal = {type:'settings'}; renderModals(); });
+    document.getElementById('profileHeaderBtn').addEventListener('click', function(){ activeModal = {type:'settings'}; renderModals(); });
+    document.getElementById('manageBtn').addEventListener('click', function(){ activeModal = {type:'manage'}; pendingNewTopicIcon=null; emojiPickerFor=null; renderModals(); });
+    document.getElementById('todayStatCard').addEventListener('click', function(){ navigateTo({type:'period', period:'day'}); });
+    document.querySelectorAll('[data-period]').forEach(function(btn){
+      btn.addEventListener('click', function(){ navigateTo({type:'period', period: btn.getAttribute('data-period')}); });
+    });
+    document.getElementById('homeDatePrev').addEventListener('click', function(){ shiftHomeDate(-1); });
+    document.getElementById('homeDateNext').addEventListener('click', function(){ shiftHomeDate(1); });
+    document.getElementById('homeDateLabel').addEventListener('click', function(){
+      var p = parseDateKey(homeSelectedDateKey);
+      navigateTo({type:'calendar', year:p.year, month:p.month});
+    });
+    document.querySelectorAll('.row-main').forEach(function(el){
+      el.addEventListener('click', function(){ navigateTo({type:'timer', topicId: el.getAttribute('data-topic')}); });
+      el.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); el.click(); } });
+    });
+  }
+
+  var RING_R = 90;
+  var RING_CIRC = 2 * Math.PI * RING_R;
+
+  function renderTimerHTML(topicId){
+    var topic = state.topics.find(function(t){ return t.id===topicId; });
+    if(!topic){ navigateBack(); return renderHomeHTML(); }
+    var elapsedMs = getStopwatchElapsedMs(topicId);
+    var isRunning = isStopwatchRunning(topicId);
+    var progress = (elapsedMs % 60000) / 60000;
+    var dashoffset = elapsedMs > 0 ? RING_CIRC * (1 - progress) : RING_CIRC;
+    var quickAddEnabled = elapsedMs >= 30000;
+    var isSubtract = timeEntryMode === 'subtract';
+
+    var menuHtml = timerMenuOpen ? (
+      '<div class="kebab-menu" id="kebabMenu">' +
+        '<button data-action="resetTotal">' + ICONS.trash + ' Konuyu Sıfırla</button>' +
+        '<button data-action="removeTopic" class="danger">' + ICONS.close + ' Konuyu Kaldır</button>' +
+      '</div>'
+    ) : '';
+
+    var presetVals = [10,30,60,120];
+    var presetsHtml = presetVals.map(function(v){
+      var label = (isSubtract?'-':'+') + (v<60 ? (v+' dk') : (v===60?'1 sa':'2 sa'));
+      return '<button class="preset-btn' + (isSubtract?' subtract':'') + '" data-mins="' + v + '">' + label + '</button>';
+    }).join('');
+
+    return '' +
+      '<div class="page-header">' +
+        '<button class="back-btn" id="timerBackBtn">' + ICONS.back + '</button>' +
+        '<div class="page-title"><span>' + topic.icon + '</span><span class="name">' + escapeHtml(topic.name) + '</span></div>' +
+        '<button class="kebab-btn" id="kebabBtn">' + ICONS.kebab + '</button>' +
+        menuHtml +
+      '</div>' +
+      '<div class="stopwatch-wrap">' +
+        '<svg class="stopwatch-ring" viewBox="0 0 200 200">' +
+          '<circle class="ring-track" cx="100" cy="100" r="' + RING_R + '"></circle>' +
+          '<circle class="ring-progress" cx="100" cy="100" r="' + RING_R + '" stroke-dasharray="' + RING_CIRC + '" stroke-dashoffset="' + dashoffset + '"></circle>' +
+        '</svg>' +
+        '<div class="stopwatch-time">' + formatClockMs(elapsedMs) + '</div>' +
+      '</div>' +
+      '<div class="stopwatch-controls">' +
+        '<button class="stopwatch-btn-reset" id="stopwatchReset" title="Sıfırla">' + ICONS.reset + '</button>' +
+        '<button class="stopwatch-btn-play' + (isRunning?' is-running':'') + '" id="stopwatchPlay">' + (isRunning?ICONS.pauseBig:ICONS.playBig) + '</button>' +
+      '</div>' +
+      '<button class="stopwatch-quickadd" id="quickAddBtn"' + (quickAddEnabled?'':' disabled') + '>⏱️ Kronometreyi Ekle (' + formatClock(elapsedMs/1000) + ')</button>' +
+      '<div class="topic-total-line">Kayıtlı toplam: ' + formatDuration(topic.total) + '</div>' +
+      '<div class="section-label">Süre Ekle / Çıkar</div>' +
+      '<div class="mode-toggle">' +
+        '<button class="mode-btn' + (!isSubtract?' active-add':'') + '" data-mode="add">Ekle</button>' +
+        '<button class="mode-btn' + (isSubtract?' active-subtract':'') + '" data-mode="subtract">Çıkar</button>' +
+      '</div>' +
+      '<div class="preset-row">' + presetsHtml + '</div>' +
+      '<div class="custom-row">' +
+        '<div class="input-group"><label>Saat</label><input id="hourInput" type="number" min="0" inputmode="numeric" placeholder="0"></div>' +
+        '<div class="input-group"><label>Dakika</label><input id="minInput" type="number" min="0" max="59" inputmode="numeric" placeholder="0"></div>' +
+        '<button class="add-btn' + (isSubtract?' subtract':'') + '" id="customAddBtn">' + (isSubtract?'Sil':'Ekle') + '</button>' +
+      '</div>';
+  }
+
+  function bindTimerEvents(topicId){
+    document.getElementById('timerBackBtn').addEventListener('click', navigateBack);
+    document.getElementById('kebabBtn').addEventListener('click', function(){ timerMenuOpen = !timerMenuOpen; render(); });
+    if(timerMenuOpen){
+      var menu = document.getElementById('kebabMenu');
+      if(menu){
+        menu.querySelector('[data-action="resetTotal"]').addEventListener('click', function(){ resetTopicTotal(topicId); });
+        menu.querySelector('[data-action="removeTopic"]').addEventListener('click', function(){ removeTopic(topicId); });
+      }
+    }
+    document.getElementById('stopwatchPlay').addEventListener('click', function(){ toggleStopwatch(topicId); });
+    document.getElementById('stopwatchReset').addEventListener('click', function(){ resetStopwatch(topicId); });
+    document.getElementById('quickAddBtn').addEventListener('click', function(){ addStopwatchReadingToTotal(topicId); });
+    document.querySelectorAll('[data-mode]').forEach(function(btn){
+      btn.addEventListener('click', function(){ timeEntryMode = btn.getAttribute('data-mode'); render(); });
+    });
+    document.querySelectorAll('.preset-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var raw = parseInt(btn.getAttribute('data-mins'),10);
+        addTime(topicId, timeEntryMode==='subtract' ? -raw : raw);
+      });
+    });
+    var hourInput = document.getElementById('hourInput');
+    var minInput = document.getElementById('minInput');
+    function submitCustom(){
+      var h = parseInt(hourInput.value,10) || 0;
+      var m = parseInt(minInput.value,10) || 0;
+      var minutes = h*60+m;
+      if(minutes===0) return;
+      addTime(topicId, timeEntryMode==='subtract' ? -minutes : minutes);
+    }
+    document.getElementById('customAddBtn').addEventListener('click', submitCustom);
+    [hourInput, minInput].forEach(function(inp){
+      inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); submitCustom(); } });
+    });
+  }
+
+  function renderPeriodHTML(period){
+    var now = Date.now();
+    var startTs, endTs = Infinity, label;
+    if(period==='day'){ startTs = startOfDay(now); label='Bugün'; }
+    else if(period==='yesterday'){ var sod = startOfDay(now); startTs = sod - 86400000; endTs = sod; label='Dün'; }
+    else if(period==='week'){ startTs = startOfWeek(now); label='Bu Hafta'; }
+    else if(period==='month'){ startTs = startOfMonth(now); label='Bu Ay'; }
+    else { startTs = startOfYear(now); label='Bu Yıl'; }
+
+    var breakdown = breakdownRange(startTs, endTs);
+    var total = breakdown.reduce(function(a,b){ return a+b.minutes; }, 0);
+    var itemsHtml = breakdown.map(function(b){
+      return '<div class="breakdown-item"><div class="icon-badge">' + b.icon + '</div><div class="name">' + escapeHtml(b.name) + '</div><div class="value">' + formatDuration(b.minutes) + '</div></div>';
+    }).join('') || '<div class="empty-state">Bu dönemde henüz çalışma kaydı yok.</div>';
+
+    return '' +
+      '<div class="page-header">' +
+        '<button class="back-btn" id="periodBackBtn">' + ICONS.back + '</button>' +
+        '<div class="page-title"><span class="name">' + label + '</span></div>' +
+      '</div>' +
+      '<div class="stat-card" style="cursor:default;"><div class="label">Toplam</div><div class="value">' + formatDuration(total) + '</div></div>' +
+      '<div style="height:16px"></div>' +
+      '<div class="manage-list">' + itemsHtml + '</div>';
+  }
+  function bindPeriodEvents(){ document.getElementById('periodBackBtn').addEventListener('click', navigateBack); }
+
+  function renderCalendarHTML(view){
+    var label = MONTHS_TR[view.month-1] + ' ' + view.year;
+    var totals = monthDayTotals(view.year, view.month);
+    var leading = firstWeekdayOfMonth(view.year, view.month);
+    var numDays = daysInMonth(view.year, view.month);
+    var todayK = todayKey();
+    var weekdaysHtml = DAY_ABBR_TR.map(function(d){ return '<span>' + d + '</span>'; }).join('');
+    var cells = '';
+    for(var i=0;i<leading;i++){ cells += '<div class="calendar-cell empty"></div>'; }
+    for(var day=1; day<=numDays; day++){
+      var dateKey = makeDateKey(view.year, view.month, day);
+      var mins = totals[day] || 0;
+      var isFuture = dateKey > todayK;
+      var classes = 'calendar-cell' + (mins>0?' has-data':'') + (dateKey===todayK?' is-today':'');
+      cells += '<button class="' + classes + '" data-date="' + dateKey + '"' + (isFuture?' disabled style="opacity:0.3;cursor:default;"':'') + '><span>' + day + '</span>' + (mins>0?('<span class="mini-total">'+formatDurationShort(mins)+'</span>'):'') + '</button>';
+    }
+    return '' +
+      '<div class="page-header">' +
+        '<button class="back-btn" id="calendarBackBtn">' + ICONS.back + '</button>' +
+        '<div class="page-title"><span class="name">Takvim</span></div>' +
+      '</div>' +
+      '<div class="calendar-nav">' +
+        '<button id="prevMonthBtn">‹</button>' +
+        '<div class="month-label">' + label + '</div>' +
+        '<button id="nextMonthBtn">›</button>' +
+      '</div>' +
+      '<div class="calendar-weekdays">' + weekdaysHtml + '</div>' +
+      '<div class="calendar-grid">' + cells + '</div>';
+  }
+  function bindCalendarEvents(view){
+    document.getElementById('calendarBackBtn').addEventListener('click', navigateBack);
+    document.getElementById('prevMonthBtn').addEventListener('click', function(){
+      var m = view.month - 1, y = view.year;
+      if(m < 1){ m = 12; y -= 1; }
+      replaceTop({type:'calendar', year:y, month:m});
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', function(){
+      var m = view.month + 1, y = view.year;
+      if(m > 12){ m = 1; y += 1; }
+      replaceTop({type:'calendar', year:y, month:m});
+    });
+    document.querySelectorAll('.calendar-cell[data-date]:not(:disabled)').forEach(function(cell){
+      cell.addEventListener('click', function(){
+        dayEditMode = false; dayEditDraft = null;
+        navigateTo({type:'day', dateKey: cell.getAttribute('data-date')});
+      });
+    });
+  }
+
+  function renderDayHTML(view){
+    var range = dayRange(view.dateKey);
+    var p = parseDateKey(view.dateKey);
+    var headerLabel = p.day + ' ' + MONTHS_TR[p.month-1] + ' ' + p.year;
+    var breakdown = breakdownRange(range[0], range[1]);
+
+    if(dayEditMode && !dayEditDraft){
+      dayEditDraft = {};
+      breakdown.forEach(function(b){ dayEditDraft[b.id] = b.minutes; });
+    }
+
+    var bodyHtml;
+    if(!dayEditMode){
+      var total = breakdown.reduce(function(a,b){ return a+b.minutes; }, 0);
+      var itemsHtml = breakdown.map(function(b){
+        return '<div class="breakdown-item"><div class="icon-badge">' + b.icon + '</div><div class="name">' + escapeHtml(b.name) + '</div><div class="value">' + formatDuration(b.minutes) + '</div></div>';
+      }).join('') || '<div class="empty-state">Bu gün için kayıt yok.</div>';
+      bodyHtml = '<div class="stat-card" style="cursor:default;"><div class="label">Toplam</div><div class="value">' + formatDuration(total) + '</div></div><div style="height:16px"></div><div class="manage-list">' + itemsHtml + '</div>';
+    } else {
+      var draftKeys = Object.keys(dayEditDraft);
+      var rowsHtml = draftKeys.map(function(topicId){
+        var topic = state.topics.find(function(t){ return t.id===topicId; });
+        var name = topic ? topic.name : '(silinmiş konu)';
+        var icon = topic ? topic.icon : '📘';
+        var mins = dayEditDraft[topicId];
+        var hh = Math.floor(mins/60), mm = mins%60;
+        return '<div class="day-edit-row" data-row="' + topicId + '">' +
+          '<div class="icon-badge">' + icon + '</div>' +
+          '<div class="name">' + escapeHtml(name) + '</div>' +
+          '<input type="number" min="0" data-draft-hr="' + topicId + '" value="' + hh + '"><span class="unit-label">sa</span>' +
+          '<input type="number" min="0" max="59" data-draft-min="' + topicId + '" value="' + mm + '"><span class="unit-label">dk</span>' +
+          '<button class="trash-btn" data-draft-remove="' + topicId + '">' + ICONS.trash + '</button>' +
+        '</div>';
+      }).join('') || '<div class="empty-state">Bu gün için kayıt yok. Aşağıdan ekleyebilirsin.</div>';
+
+      var availableTopics = state.topics.filter(function(t){ return draftKeys.indexOf(t.id) === -1; });
+      var selectOptions = availableTopics.map(function(t){ return '<option value="' + t.id + '">' + t.icon + ' ' + escapeHtml(t.name) + '</option>'; }).join('');
+      var addRowHtml = availableTopics.length > 0 ? (
+        '<div class="day-add-row">' +
+          '<select id="dayAddSelect">' + selectOptions + '</select>' +
+          '<input type="number" min="0" id="dayAddHours" placeholder="sa">' +
+          '<input type="number" min="0" max="59" id="dayAddMinutes" placeholder="dk">' +
+          '<button id="dayAddBtn">' + ICONS.plus + '</button>' +
+        '</div>'
+      ) : '';
+
+      bodyHtml = '<div class="manage-list">' + rowsHtml + '</div>' + addRowHtml +
+        '<button class="save-edit-btn" id="daySaveBtn">Kaydet</button>' +
+        '<button class="cancel-edit-btn" id="dayCancelBtn">Vazgeç</button>';
+    }
+
+    return '' +
+      '<div class="page-header">' +
+        '<button class="back-btn" id="dayBackBtn">' + ICONS.back + '</button>' +
+        '<div class="page-title"><span class="name">' + headerLabel + '</span></div>' +
+        (!dayEditMode ? ('<button class="kebab-btn" id="dayEditBtn">' + ICONS.pencil + '</button>') : '') +
+      '</div>' +
+      bodyHtml;
+  }
+  function bindDayEvents(view){
+    document.getElementById('dayBackBtn').addEventListener('click', navigateBack);
+    if(!dayEditMode){
+      var editBtn = document.getElementById('dayEditBtn');
+      if(editBtn) editBtn.addEventListener('click', function(){ dayEditMode = true; dayEditDraft = null; render(); });
+    } else {
+      function recombine(topicId){
+        var hrInput = document.querySelector('[data-draft-hr="'+topicId+'"]');
+        var minInput = document.querySelector('[data-draft-min="'+topicId+'"]');
+        var h = hrInput ? (parseInt(hrInput.value,10)||0) : 0;
+        var m = minInput ? (parseInt(minInput.value,10)||0) : 0;
+        dayEditDraft[topicId] = h*60+m;
+      }
+      document.querySelectorAll('[data-draft-hr]').forEach(function(inp){ inp.addEventListener('input', function(){ recombine(inp.getAttribute('data-draft-hr')); }); });
+      document.querySelectorAll('[data-draft-min]').forEach(function(inp){ inp.addEventListener('input', function(){ recombine(inp.getAttribute('data-draft-min')); }); });
+      document.querySelectorAll('[data-draft-remove]').forEach(function(btn){
+        btn.addEventListener('click', function(){ delete dayEditDraft[btn.getAttribute('data-draft-remove')]; render(); });
+      });
+      var addBtn = document.getElementById('dayAddBtn');
+      if(addBtn){
+        addBtn.addEventListener('click', function(){
+          var sel = document.getElementById('dayAddSelect');
+          var hInput = document.getElementById('dayAddHours');
+          var mInput = document.getElementById('dayAddMinutes');
+          var topicId = sel.value;
+          var h = parseInt(hInput.value,10) || 0;
+          var m = parseInt(mInput.value,10) || 0;
+          var mins = h*60+m;
+          if(!topicId || mins<=0) return;
+          dayEditDraft[topicId] = mins;
+          render();
+        });
+      }
+      document.getElementById('daySaveBtn').addEventListener('click', function(){
+        var range = dayRange(view.dateKey);
+        state.entries = state.entries.filter(function(e){ return !(e.ts>=range[0] && e.ts<range[1]); });
+        Object.keys(dayEditDraft).forEach(function(topicId){
+          var mins = dayEditDraft[topicId];
+          if(mins && mins>0){ state.entries.push({topicId:topicId, minutes:mins, ts: range[0] + 12*3600*1000}); }
+        });
+        state.topics.forEach(function(t){
+          t.total = state.entries.filter(function(e){ return e.topicId===t.id; }).reduce(function(a,e){ return a+e.minutes; }, 0);
+        });
+        saveState();
+        dayEditMode = false; dayEditDraft = null;
+        render();
+      });
+      document.getElementById('dayCancelBtn').addEventListener('click', function(){ dayEditMode = false; dayEditDraft = null; render(); });
+    }
+  }
+
+  function renderModals(){
+    var root = document.getElementById('modalRoot');
+    if(!activeModal){ root.innerHTML=''; return; }
+
+    var html = '';
+    if(activeModal.type === 'settings'){
+      var themeButtons = Object.keys(THEME_LABELS).map(function(k){
+        var pv = THEME_PREVIEWS[k];
+        var isActive = state.theme===k;
+        var style = 'background:'+pv.bg+';color:'+pv.text+';border-color:'+(isActive?pv.accent:pv.border)+';';
+        return '<button class="theme-btn' + (isActive?' active':'') + '" style="' + style + '" data-theme-choice="' + k + '">' + THEME_LABELS[k] + (isActive?'<span class="check">✓</span>':'') + '</button>';
+      }).join('');
+
+      var profileCirclesHtml = profileRegistry.profiles.map(function(p){
+        var isActive = p.id === profileRegistry.activeProfileId;
+        var delBadge = profileRegistry.profiles.length > 1 ? ('<button class="circle-del-badge" data-remove-profile="' + p.id + '">×</button>') : '';
+        return '<div class="profile-circle-item">' +
+          '<div class="profile-circle' + (isActive?' active':'') + '" data-profile-circle="' + p.id + '">' + p.emoji + delBadge + '</div>' +
+          '<div class="profile-circle-name" data-rename-profile="' + p.id + '">' + escapeHtml(p.name) + '</div>' +
+        '</div>';
+      }).join('');
+      profileCirclesHtml += '<div class="profile-circle-item"><button class="profile-circle add-circle" id="addProfileCircleBtn">' + ICONS.plus + '</button><div class="profile-circle-name">Ekle</div></div>';
+
+      html =
+        '<div class="modal-backdrop" id="settingsBackdrop">' +
+          '<div class="modal-card">' +
+            '<div class="modal-header"><h2>Ayarlar</h2><button class="close-btn" id="closeSettings">' + ICONS.close + '</button></div>' +
+            '<div class="section-label">Görünüm</div>' +
+            '<div class="theme-options">' + themeButtons + '</div>' +
+            '<div class="section-label">Kullanıcılar</div>' +
+            '<div class="profile-circles">' + profileCirclesHtml + '</div>' +
+            '<div style="height:10px"></div>' +
+            '<div class="section-label">Veri</div>' +
+            '<button class="danger-zone-btn" id="resetAllBtn">Tüm süreleri sıfırla</button>' +
+          '</div>' +
+        '</div>';
+    } else if(activeModal.type === 'manage'){
+      var itemsHtml = state.topics.map(function(t){
+        return '<div class="manage-item">' +
+          '<button class="icon-badge" data-edit-icon="' + t.id + '" title="Emoji değiştir">' + t.icon + '</button>' +
+          '<div class="name">' + escapeHtml(t.name) + '</div>' +
+          '<button class="trash-btn" data-remove="' + t.id + '">' + ICONS.trash + '</button>' +
+        '</div>';
+      }).join('') || '<div class="empty-state">Henüz konu yok</div>';
+
+      html =
+        '<div class="modal-backdrop" id="manageBackdrop">' +
+          '<div class="modal-card">' +
+            '<div class="modal-header"><h2>Konuları Düzenle</h2><button class="close-btn" id="closeManage">' + ICONS.close + '</button></div>' +
+            '<div class="manage-list">' + itemsHtml + '</div>' +
+            '<div class="section-label">Yeni konu ekle</div>' +
+            '<div class="add-topic-row">' +
+              '<button class="emoji-picker-btn" id="newTopicEmojiBtn">' + (pendingNewTopicIcon || '🙂') + '</button>' +
+              '<input id="newTopicInput" type="text" placeholder="Konu adı" maxlength="30">' +
+              '<button class="submit-add" id="addTopicBtn">' + ICONS.plus + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    root.innerHTML = html;
+
+    if(activeModal.type === 'settings'){
+      bindBackdropClose('settingsBackdrop', function(){ activeModal=null; });
+      document.getElementById('closeSettings').addEventListener('click', function(){ activeModal=null; render(); });
+      root.querySelectorAll('[data-theme-choice]').forEach(function(btn){
+        btn.addEventListener('click', function(){ setTheme(btn.getAttribute('data-theme-choice')); activeModal={type:'settings'}; renderModals(); });
+      });
+      root.querySelectorAll('[data-profile-circle]').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if(e.target.closest('.circle-del-badge')) return;
+          var id = el.getAttribute('data-profile-circle');
+          if(id === profileRegistry.activeProfileId){
+            emojiPickerFor = {mode:'profile-edit', profileId: id};
+            renderEmojiOverlay();
+          } else {
+            switchProfile(id);
+            activeModal = {type:'settings'};
+            renderModals();
+          }
+        });
+      });
+      root.querySelectorAll('[data-remove-profile]').forEach(function(btn){
+        btn.addEventListener('click', function(e){ e.stopPropagation(); removeProfileById(btn.getAttribute('data-remove-profile')); });
+      });
+      root.querySelectorAll('[data-rename-profile]').forEach(function(el){
+        el.addEventListener('click', function(){ renameProfile(el.getAttribute('data-rename-profile')); });
+      });
+      var addCircleBtn = document.getElementById('addProfileCircleBtn');
+      if(addCircleBtn){
+        addCircleBtn.addEventListener('click', function(){
+          var name = prompt('Kullanıcı adı:');
+          if(name === null) return;
+          name = name.trim();
+          if(!name) return;
+          pendingNewProfileName = name;
+          emojiPickerFor = {mode:'profile-new'};
+          renderEmojiOverlay();
+        });
+      }
+      document.getElementById('resetAllBtn').addEventListener('click', function(){
+        if(confirm('Tüm konulardaki süreleri sıfırlamak istediğine emin misin?')){ resetAllTotals(); renderModals(); }
+      });
+    } else if(activeModal.type === 'manage'){
+      bindBackdropClose('manageBackdrop', function(){ activeModal=null; pendingNewTopicIcon=null; emojiPickerFor=null; });
+      document.getElementById('closeManage').addEventListener('click', function(){ activeModal=null; pendingNewTopicIcon=null; emojiPickerFor=null; render(); });
+      root.querySelectorAll('[data-remove]').forEach(function(btn){
+        btn.addEventListener('click', function(){ removeTopic(btn.getAttribute('data-remove')); activeModal={type:'manage'}; renderModals(); });
+      });
+      root.querySelectorAll('[data-edit-icon]').forEach(function(btn){
+        btn.addEventListener('click', function(){ emojiPickerFor = {mode:'topic-edit', topicId: btn.getAttribute('data-edit-icon')}; renderEmojiOverlay(); });
+      });
+      document.getElementById('newTopicEmojiBtn').addEventListener('click', function(){ emojiPickerFor = {mode:'topic-new'}; renderEmojiOverlay(); });
+      var input = document.getElementById('newTopicInput');
+      var addBtn = document.getElementById('addTopicBtn');
+      function submitNewTopic(){
+        var v = input.value;
+        if(!v.trim()) return;
+        addTopic(v, pendingNewTopicIcon);
+        pendingNewTopicIcon = null;
+        activeModal = {type:'manage'};
+        renderModals();
+      }
+      addBtn.addEventListener('click', submitNewTopic);
+      input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); submitNewTopic(); } });
+    }
+
+    renderEmojiOverlay();
+  }
+
+  function renderEmojiOverlay(){
+    var existing = document.getElementById('emojiOverlayRoot');
+    if(existing) existing.remove();
+    if(!emojiPickerFor) return;
+
+    var choices = (emojiPickerFor.mode === 'profile-new' || emojiPickerFor.mode === 'profile-edit') ? PEOPLE_EMOJIS : EMOJI_CHOICES;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'emojiOverlayRoot';
+    overlay.innerHTML =
+      '<div class="modal-backdrop layered" id="emojiBackdrop">' +
+        '<div class="modal-card">' +
+          '<div class="modal-header"><h2>Emoji Seç</h2><button class="close-btn" id="closeEmoji">' + ICONS.close + '</button></div>' +
+          '<div class="emoji-grid">' + choices.map(function(e){ return '<button class="emoji-option" data-emoji="' + e + '">' + e + '</button>'; }).join('') + '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    document.getElementById('emojiBackdrop').addEventListener('click', function(e){
+      if(e.target.id === 'emojiBackdrop'){ emojiPickerFor = null; pendingNewProfileName = null; renderEmojiOverlay(); }
+    });
+    document.getElementById('closeEmoji').addEventListener('click', function(){ emojiPickerFor = null; pendingNewProfileName = null; renderEmojiOverlay(); });
+    overlay.querySelectorAll('.emoji-option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var chosen = btn.getAttribute('data-emoji');
+        if(emojiPickerFor.mode === 'topic-new'){
+          pendingNewTopicIcon = chosen;
+        } else if(emojiPickerFor.mode === 'topic-edit'){
+          var topic = state.topics.find(function(t){ return t.id===emojiPickerFor.topicId; });
+          if(topic){ topic.icon = chosen; saveState(); }
+        } else if(emojiPickerFor.mode === 'profile-new'){
+          var nm = pendingNewProfileName;
+          pendingNewProfileName = null;
+          emojiPickerFor = null;
+          renderEmojiOverlay();
+          addProfile(nm, chosen);
+          activeModal = {type:'settings'};
+          renderModals();
+          return;
+        } else if(emojiPickerFor.mode === 'profile-edit'){
+          var prof = profileRegistry.profiles.find(function(p){ return p.id===emojiPickerFor.profileId; });
+          if(prof){ prof.emoji = chosen; saveProfileRegistry(); }
+        }
+        emojiPickerFor = null;
+        renderEmojiOverlay();
+        renderModals();
+        render();
+      });
+    });
+  }
+
+  function bindBackdropClose(id, onClose){
+    var el = document.getElementById(id);
+    if(el){ el.addEventListener('click', function(e){ if(e.target.id===id){ onClose(); render(); } }); }
+  }
+
+  function render(){
+    renderPageTabs();
+    if(activePage === 1){
+      document.getElementById('app').innerHTML = renderPage2HTML();
+      ensureTicking();
+      return;
+    }
+    var app = document.getElementById('app');
+    var view = topView();
+    if(view.type === 'home'){
+      app.innerHTML = renderHomeHTML();
+      bindHomeEvents();
+    } else if(view.type === 'timer'){
+      app.innerHTML = renderTimerHTML(view.topicId);
+      if(topView().type === 'timer') bindTimerEvents(view.topicId);
+    } else if(view.type === 'period'){
+      app.innerHTML = renderPeriodHTML(view.period);
+      bindPeriodEvents();
+    } else if(view.type === 'calendar'){
+      app.innerHTML = renderCalendarHTML(view);
+      bindCalendarEvents(view);
+    } else if(view.type === 'day'){
+      app.innerHTML = renderDayHTML(view);
+      bindDayEvents(view);
+    }
+    renderModals();
+    ensureTicking();
+  }
+
+  function ensureTicking(){
+    var view = topView();
+    var wantFast = activePage===0 && view.type==='timer' && isStopwatchRunning(view.topicId);
+    var wantSlow = !wantFast && anyStopwatchRunning();
+    var desiredDelay = wantFast ? 50 : (wantSlow ? 1000 : null);
+    if(desiredDelay === null){
+      if(tickInterval){ clearInterval(tickInterval); tickInterval=null; tickDelay=null; }
+      return;
+    }
+    if(tickInterval && tickDelay === desiredDelay) return;
+    if(tickInterval){ clearInterval(tickInterval); }
+    tickDelay = desiredDelay;
+    tickInterval = setInterval(render, desiredDelay);
+  }
+
+  var touchStartX = null, touchStartY = null;
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(touchStartX === null) return;
+    var endX = e.changedTouches[0].clientX, endY = e.changedTouches[0].clientY;
+    var dx = endX - touchStartX, dy = endY - touchStartY;
+    touchStartX = null; touchStartY = null;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      if(dx < 0 && activePage === 0){ activePage = 1; render(); }
+      else if(dx > 0 && activePage === 1){ activePage = 0; render(); }
+    }
+  }, {passive:true});
+
+  render();
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+</script>
+</body>
+</html>
